@@ -173,10 +173,10 @@
     }
   </style>
   <style>
-    /* نمایش دو ستونه در نمای موبایل */
+    /* نمایش یک ستونه در نمای موبایل */
     @media (max-width: 575.98px) {
       form#weldingForm > div[class*="col-"] {
-        width: 48% !important;
+        width: 100% !important;
         float: none;
         padding-right: 0;
         box-sizing: border-box;
@@ -184,6 +184,11 @@
       form#weldingForm > div[class*="col-"]:nth-child(2n) {
         padding-right: 0;
       }
+    }
+    /* فونت های بولدتر و انگلیسی */
+    label, input, select, button {
+      font-weight: 600;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
   </style>
 </head>
