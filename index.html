@@ -176,15 +176,13 @@
     /* نمایش دو ستونه در نمای موبایل */
     @media (max-width: 575.98px) {
       form#weldingForm > div[class*="col-"] {
--        width: 100% !important;
-+        width: 48% !important;
+        width: 48% !important;
         float: none;
         padding-right: 0;
         box-sizing: border-box;
       }
       form#weldingForm > div[class*="col-"]:nth-child(2n) {
--        padding-right: 0;
-+        padding-right: 0;
+        padding-right: 0;
       }
     }
   </style>
@@ -192,9 +190,9 @@
   <body>
     <div class="title-bar-fixed text-center" style="background-color: #1877f2; color: white; padding: 6px 15px; position: fixed; top: 0; left: 0; width: 100%; z-index: 1050;">
       <h1 class="mb-1" style="font-size: 1.5rem; margin-bottom: 0;">Welding Weight Calculator</h1>
-      <div style="font-size: 0.75rem; font-weight: 500;">Developed by Amin Naseri Karimvand | Email: akarimvand@gmail.com</div>
+      <div style="font-size: 0.75rem; font-weight: 500;">Developed by Amin Naseri Karimvand</div>
     </div>
-    <div class="container" style="padding-top: 60px;">
+    <div class="container" style="padding-top: 100px;">
        <form id="weldingForm" class="row g-3">
          <!-- Pipe Parameters -->
          <div class="col-md-4">
@@ -311,7 +309,7 @@
        </div>
      </div>
 -    <footer>
--      Developed by Amin Naseri Karimvand | Email: akarimvand@gmail.com
+-      Copyright © 2025 Amin Naseri| Email: akarimvand@gmail.com
 -    </footer>
   <script>
     let historyData = [];
