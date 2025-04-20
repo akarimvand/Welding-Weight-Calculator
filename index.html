@@ -1,0 +1,426 @@
+ی<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welding Weight Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background-color: #f8f9fa;
+      transition: all 0.3s ease;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-floating {
+      margin-bottom: 1.5rem;
+    }
+    .result-card {
+      margin-top: 2rem;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.5s ease;
+    }
+    .result-card.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .range-input {
+      accent-color: #0d6efd;
+    }
+    .text-red {
+      color: #dc3545;
+      font-weight: 600;
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #333;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 0.8rem;
+    }
+    .history-table {
+      margin-top: 2rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .btn-export {
+      margin-top: 1rem;
+    }
+    .delete-btn {
+      color: red;
+      cursor: pointer;
+    }
+  </style>
+  <style>
+    /* نمایش دو ستونه در نمای موبایل */
+    @media (max-width: 575.98px) {
+      form#weldingForm > div[class*="col-"] {
+        width: 50% !important;
+        float: left;
+        padding-right: 10px;
+        box-sizing: border-box;
+      }
+      form#weldingForm > div[class*="col-"]:nth-child(2n) {
+        padding-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-5">Welding Weight Calculator</h1>
+    <form id="weldingForm" class="row g-3">
+      <!-- Pipe Parameters -->
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="0.01" min="0" class="form-control" id="pipeSize" placeholder="Pipe Size" required>
+          <label>Pipe Size (Inches)</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="0.01" min="0" class="form-control" id="pipeThickness" placeholder="Wall Thickness" required>
+          <label>Wall Thickness (mm)</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="1" min="1" max="4" class="form-control" id="weldReinforcement" placeholder="Reinforcement" value="3" required>
+          <label>Weld Reinforcement (mm)</label>
+        </div>
+      </div>
+      <!-- Welding Parameters -->
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="0.1" min="0" max="90" class="form-control" id="bevelAngle" placeholder="Bevel Angle" value="37.5" required>
+          <label>Bevel Angle (Degrees)</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="1" min="1" max="10" class="form-control range-input" id="fillerThreshold" placeholder="Filler Threshold" value="8" required>
+          <label>Filler Threshold (mm)</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-floating">
+          <input type="number" step="1" min="1" class="form-control" id="jointQuantity" placeholder="QTY Joint" value="1" required>
+          <label>QTY Joint</label>
+        </div>
+      </div>
+      <!-- Material Selection -->
+      <div class="col-md-6">
+        <div class="form-floating">
+          <select class="form-select" id="materialGrade" required>
+            <option value="Carbon Steel" data-electrode="E7018" data-filler="ER70S-6" data-density="7.850">Carbon Steel (A36, A516, S275)</option>
+            <option value="Low Alloy Steel" data-electrode="E8018-B2" data-filler="ER80S-B2" data-density="7.850">Low Alloy Steel (Cr-Mo, 5Cr-1/2Mo)</option>
+            <option value="Stainless Steel 304" data-electrode="E308L" data-filler="ER308L" data-density="7.900">Stainless Steel 304</option>
+            <option value="Stainless Steel 316" data-electrode="E316L" data-filler="ER316L" data-density="7.750">Stainless Steel 316</option>
+            <option value="Aluminum 6061" data-electrode="—" data-filler="ER4043, ER5356" data-density="2.720">Aluminum 6061</option>
+            <option value="Aluminum 7075" data-electrode="—" data-filler="ER5356" data-density="2.810">Aluminum 7075</option>
+            <option value="Copper" data-electrode="ERCu" data-filler="ECu" data-density="8.940">Copper</option>
+            <option value="Titanium" data-electrode="ERTi-2" data-filler="ERTi-2" data-density="4.500">Titanium (Grade 2)</option>
+            <option value="Nickel" data-electrode="ENi-1" data-filler="ERNi-1" data-density="8.908">Nickel (Nickel 200)</option>
+          </select>
+          <label>Material Grade</label>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-floating">
+          <input type="number" step="0.1" min="0" max="100" class="form-control" id="electrodeEfficiency" placeholder="Electrode Efficiency" value="60" required>
+          <label>Electrode Efficiency (%)</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary w-100">Calculate</button>
+      </div>
+    </form>
+    <!-- Results Card -->
+    <div id="results" class="result-card card d-none">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Current Calculation</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <strong>Material Grade:</strong> <span id="materialResult"></span>
+              </li>
+              <li class="list-group-item">
+                <strong>Welding Process:</strong> <span id="processResult" class="text-primary"></span>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <strong>Electrode:</strong> <span id="electrodeTypeResult"></span> = <span id="electrodeWeightResult" class="text-red"></span> kg
+              </li>
+              <li class="list-group-item">
+                <strong>Filler:</strong> <span id="fillerTypeResult"></span> = <span id="fillerWeightResult" class="text-red"></span> kg
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- History Section -->
+    <div class="history-section mt-5">
+      <h4 class="mb-3">Calculation History</h4>
+      <div class="history-table table-responsive">
+        <table class="table table-striped" id="historyTable">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Pipe Size</th>
+              <th>Wall Thickness</th>
+              <th>QTY Joint</th>
+              <th>Material</th>
+              <th>OD (mm)</th>
+              <th>ID (mm)</th>
+              <th>Weld Length (mm)</th>
+              <th>Bevel Angle</th>
+              <th>Reinforcement</th>
+              <th>Filler Threshold</th>
+              <th>Process</th>
+              <th>Electrode Type</th>
+              <th>Electrode Weight</th>
+              <th>Filler Type</th>
+              <th>Filler Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-success" onclick="exportToExcel()">Export to Excel</button>
+        <button class="btn btn-danger" onclick="clearHistory()">Clear History</button>
+      </div>
+    </div>
+  </div>
+  <footer>
+    Developed by Amin Naseri Karimvand | Email: akarimvand@gmail.com
+  </footer>
+  <script>
+    let historyData = [];
+
+    // Function to check for duplicate entries
+    function isDuplicateEntry(newEntry) {
+      return historyData.some(entry => 
+        entry.pipeSize === newEntry.pipeSize &&
+        entry.pipeThickness === newEntry.pipeThickness &&
+        entry.jointQuantity === newEntry.jointQuantity &&
+        entry.material === newEntry.material &&
+        entry.bevelAngle === newEntry.bevelAngle &&
+        entry.weldReinforcement === newEntry.weldReinforcement &&
+        entry.fillerThreshold === newEntry.fillerThreshold &&
+        entry.electrodeEfficiency === newEntry.electrodeEfficiency
+      );
+    }
+
+    // Function to update the history table
+    function updateHistoryTable() {
+      const tbody = document.querySelector('#historyTable tbody');
+      tbody.innerHTML = '';
+      historyData.forEach((entry, index) => {
+        const row = `
+          <tr>
+            <td><span class="delete-btn" onclick="deleteHistoryEntry(${index})" title="Delete" style="font-size: 1.2rem;">🗑️</span></td>
+            <td>${entry.pipeSize}</td>
+            <td>${entry.pipeThickness}</td>
+            <td>${entry.jointQuantity}</td>
+            <td>${entry.material}</td>
+            <td>${entry.od}</td>
+            <td>${entry.id}</td>
+            <td>${entry.weldLength}</td>
+            <td>${entry.bevelAngle}</td>
+            <td>${entry.weldReinforcement}</td>
+            <td>${entry.fillerThreshold}</td>
+            <td>${entry.process}</td>
+            <td>${entry.electrodeType}</td>
+            <td>${entry.electrodeWeight}</td>
+            <td>${entry.fillerType}</td>
+            <td>${entry.fillerWeight}</td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    // Function to delete a single history entry
+    function deleteHistoryEntry(index) {
+      historyData.splice(index, 1); // Remove the entry from the array
+      updateHistoryTable(); // Update the table
+    }
+
+    document.getElementById('weldingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Inputs
+      const pipeSizeInch = parseFloat(document.getElementById('pipeSize').value);
+      const pipeThickness = parseFloat(document.getElementById('pipeThickness').value);
+      const bevelAngle = parseFloat(document.getElementById('bevelAngle').value);
+      const weldReinforcement = parseFloat(document.getElementById('weldReinforcement').value);
+      const fillerThreshold = parseFloat(document.getElementById('fillerThreshold').value);
+      const jointQuantity = parseInt(document.getElementById('jointQuantity').value);
+      const electrodeEfficiency = parseFloat(document.getElementById('electrodeEfficiency').value);
+      // Material data
+      const materialOption = document.getElementById('materialGrade').selectedOptions[0];
+      const materialName = materialOption.textContent;
+      const electrodeType = materialOption.dataset.electrode;
+      const fillerType = materialOption.dataset.filler;
+      const materialDensity = parseFloat(materialOption.dataset.density);
+      // Calculations
+      const od = pipeSizeInch * 25.4; // Convert inch to mm
+      const id = od - 2 * pipeThickness;
+      const weldCircumference = Math.PI * od;
+      const totalWeldLength = weldCircumference * jointQuantity;
+      const bevelAngleRad = (bevelAngle * Math.PI) / 180;
+      const weldWidth = 2 * pipeThickness * Math.tan(bevelAngleRad);
+      const weldHeight = pipeThickness + weldReinforcement;
+      const weldArea = 0.5 * weldWidth * weldHeight;
+      const totalWeldVolume = (weldArea * totalWeldLength) / 1000; // cm³
+      // Filler/Electrode Calculation
+      let fillerVolume = 0;
+      let electrodeVolume = 0;
+      if (electrodeType === "—") {
+        fillerVolume = totalWeldVolume;
+      } else {
+        if (pipeThickness <= fillerThreshold) {
+          fillerVolume = totalWeldVolume;
+        } else {
+          const proportion = (fillerThreshold ** 2) / (pipeThickness ** 2);
+          fillerVolume = totalWeldVolume * proportion;
+          electrodeVolume = totalWeldVolume - fillerVolume;
+        }
+      }
+      const fillerWeight = (fillerVolume * materialDensity) / 1000;
+      const electrodeWeight = electrodeVolume > 0 
+        ? (electrodeVolume * materialDensity) / 1000 / (electrodeEfficiency / 100) 
+        : 0;
+      // Process determination
+      const process = electrodeType === "—" ? "GTAW" : "GTAW + SMAW";
+      // Create a new history entry
+      const newEntry = {
+        pipeSize: pipeSizeInch.toFixed(2),
+        pipeThickness: pipeThickness.toFixed(2),
+        jointQuantity: jointQuantity,
+        material: materialName,
+        od: od.toFixed(2),
+        id: id.toFixed(2),
+        weldLength: totalWeldLength.toFixed(2),
+        bevelAngle: bevelAngle.toFixed(1),
+        weldReinforcement: weldReinforcement.toFixed(0),
+        fillerThreshold: fillerThreshold.toFixed(0),
+        process: process,
+        electrodeType: electrodeType,
+        electrodeWeight: electrodeWeight.toFixed(2),
+        fillerType: fillerType,
+        fillerWeight: fillerWeight.toFixed(2),
+        electrodeEfficiency: electrodeEfficiency.toFixed(2)
+      };
+      // Check for duplicates
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: "btn btn-success",
+          cancelButton: "btn btn-danger",
+          popup: "swal-popup-small-font",
+          actions: "swal-actions-spacing"
+        },
+        buttonsStyling: false
+      });
+      if (isDuplicateEntry(newEntry)) {
+        swalWithBootstrapButtons.fire({
+          title: "This calculation already exists. Are you sure you want to add it again?",
+          text: "This action cannot be undone!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, add it!",
+          cancelButtonText: "No, cancel!",
+          reverseButtons: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            historyData.push(newEntry);
+            updateHistoryTable();
+            // Show results with animation
+            const resultsCard = document.getElementById('results');
+            resultsCard.classList.remove('d-none');
+            setTimeout(() => resultsCard.classList.add('show'), 50);
+            // Update results display
+            document.getElementById('materialResult').textContent = materialName;
+            document.getElementById('processResult').textContent = process;
+            document.getElementById('electrodeTypeResult').textContent = electrodeType;
+            document.getElementById('fillerTypeResult').textContent = fillerType;
+            document.getElementById('electrodeWeightResult').textContent = electrodeWeight.toFixed(2);
+            document.getElementById('fillerWeightResult').textContent = fillerWeight.toFixed(2);
+            swalWithBootstrapButtons.fire({
+              title: "Added!",
+              text: "Calculation successfully added to history.",
+              icon: "success"
+            });
+          } else if (
+            result.dismiss === Swal.DismissReason.cancel
+          ) {
+            swalWithBootstrapButtons.fire({
+              title: "Cancelled",
+              text: "Calculation was not added to history.",
+              icon: "error"
+            });
+          }
+        });
+      } else {
+        historyData.push(newEntry);
+        updateHistoryTable();
+        // Show results with animation
+        const resultsCard = document.getElementById('results');
+        resultsCard.classList.remove('d-none');
+        setTimeout(() => resultsCard.classList.add('show'), 50);
+        // Update results display
+        document.getElementById('materialResult').textContent = materialName;
+        document.getElementById('processResult').textContent = process;
+        document.getElementById('electrodeTypeResult').textContent = electrodeType;
+        document.getElementById('fillerTypeResult').textContent = fillerType;
+        document.getElementById('electrodeWeightResult').textContent = electrodeWeight.toFixed(2);
+        document.getElementById('fillerWeightResult').textContent = fillerWeight.toFixed(2);
+      }
+    });
+
+    function exportToExcel() {
+      const ws = XLSX.utils.json_to_sheet(historyData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "History");
+      XLSX.writeFile(wb, 'welding_history.xlsx');
+    }
+
+    function clearHistory() {
+      historyData = [];
+      updateHistoryTable();
+    }
+  </script>
+  <style>
+    .swal-popup-small-font {
+      font-size: 0.8rem !important;
+    }
+    .swal-actions-spacing > button {
+      margin: 0 10px !important;
+    }
+  </style>
+</body>
+</html>
